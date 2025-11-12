@@ -8,6 +8,15 @@ section .data
   msg2 db "Digite o segundo número: ", 0xa
   len2 equ $ - msg2
   
+  menu db 0xa, "Insira a opção da operação desejada:", 0Ah, \
+     "1- Soma", 0Ah, \
+     "2- Subtração", 0Ah, \
+     "3- Multiplicação", 0Ah, \
+     "4- Divisão", 0Ah, \
+     "", 0Ah, \
+     "0- Sair", 0Ah, 0
+  len_menu equ $ - menu
+  
   res_msg db 0xa, "--- Resultado ---", 0xa 
   len_res equ $ - res_msg
   
@@ -23,13 +32,25 @@ section .data
   div_msg db 0xa, "divisão inteira: "
   len_div equ $ - div_msg
   
-  fim db 0xa,  "----------------------------------------"
-  len_fim equ $ - fim
+  sep db 0xa,  "----------------------------------------"
+  len_sep equ $ - sep
+  
+  erro db 0xa, "Opção Inválida! Selecione uma das opções: "
+  len_erro equ $ - erro
+  
+  menu_final_msg db 0xa, "Selecione uma opção: ", 0Ah, \
+            "1- Realizar outra operação", 0Ah, \
+            "0- Sair", 0Ah, 0
+  len_final_msg equ $ - menu_final_msg
+  
+  exit_msg db 0xa, "Fim do programa."
+  len_exit equ $ - exit_msg
   
 section .bss
   num1 resb 3 
   num2 resb 3 
   resposta resb 2
+  opcao resb 2
 
 section .text
 	global _start
@@ -68,6 +89,79 @@ _start:
 	mov edx, 2
 	int 0x80
 	
+	; separador
+	mov eax, 4
+	mov ebx, 1
+	mov ecx, sep
+	mov edx, len_sep
+	int 0x80
+	jmp menu_selecao
+	
+menu_selecao:
+	mov eax, 4 
+	mov ebx, 1
+	mov ecx, menu
+	mov edx, len_menu
+	int 0x80
+	
+	mov eax, 3
+	mov ebx, 0
+	mov ecx, opcao
+	mov edx, 2
+	int 0x80
+	
+comparacao:
+    mov al, [opcao]
+    cmp al, "1"
+    je soma
+    
+    cmp al, "2"
+    je subtracao
+    
+    cmp al, "3"
+    je multiplicacao
+    
+    cmp al, "4"
+    je divisao
+    
+    cmp al, "0"
+    je exit
+    
+    jmp msg_erro
+    
+msg_erro:
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, erro
+    mov edx, len_erro
+    int 0x80
+    jmp menu_selecao
+    
+menu_final:
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, sep
+    mov edx, len_sep
+    int 0x80
+
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, menu_final_msg
+    mov edx, len_final_msg
+    int 0x80
+    
+    mov eax, 3
+    mov ebx, 0 
+    mov ecx, opcao
+    mov edx, 2
+    int 0x80
+    
+    mov al, [opcao]
+    cmp al, "1"
+    je _start
+    
+    jmp exit
+	
 soma:
   mov al, [num1]
   mov bl, [num2]
@@ -94,6 +188,7 @@ soma:
   mov ecx, resposta
   mov edx, 2
   int 0x80
+  jmp menu_final
   
 subtracao:
   mov al, [num1]
@@ -115,6 +210,7 @@ subtracao:
   mov ecx, resposta
   mov edx, 2
   int 0x80
+  jmp menu_final
   
 multiplicacao:
   mov al, [num1]
@@ -136,6 +232,7 @@ multiplicacao:
   mov ecx, resposta
   mov edx, 2
   int 0x80 
+  jmp menu_final
   
 divisao:
   mov ah, 0
@@ -161,11 +258,18 @@ divisao:
   
   mov eax, 4
   mov ebx, 1
-  mov ecx, fim
-  mov edx, len_fim
+  mov ecx, sep
+  mov edx, len_sep
   int 0x80
+  jmp menu_final
 
 exit:
-  mov eax, 1 
-  mov ebx, 0
-  int 0x80
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, exit_msg
+    mov edx, len_exit
+    int 0x80
+
+    mov eax, 1 
+    mov ebx, 0
+    int 0x80
